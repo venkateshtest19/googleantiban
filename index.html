@@ -1,1 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Securecamp — Google Ads Ban Protection Protocol</title>
+<meta name="description" content="AI-powered protection for Google Ads accounts. Prevent suspensions before they happen. $50/mo per account, payable in USDT." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090d;
+    --bg-2: #0d1117;
+    --surface: #11151d;
+    --border: #1f2733;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #a3ff12;      /* neon lime — crypto/security feel */
+    --accent-2: #7c5cff;    /* violet glow */
+    --danger: #ff3860;
+    --radius: 14px;
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Animated background blobs */
+  .bg-decor {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.35;
+    animation: float 20s ease-in-out infinite;
+  }
+  .blob.b1 { width: 520px; height: 520px; background: var(--accent); top: -120px; left: -120px; }
+  .blob.b2 { width: 460px; height: 460px; background: var(--accent-2); top: 30%; right: -160px; animation-delay: -7s; }
+  .blob.b3 { width: 380px; height: 380px; background: #00d4ff; bottom: -100px; left: 30%; animation-delay: -14s; opacity: 0.2; }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(40px, -30px) scale(1.05); }
+    66% { transform: translate(-30px, 40px) scale(0.95); }
+  }
+
+  /* Grid overlay */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(7,9,13,0.7);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; max-width: 1180px; margin: 0 auto;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 20px; letter-spacing: -0.02em;
+  }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    color: #000; font-weight: 800; font-size: 16px;
+    box-shadow: 0 0 24px rgba(163,255,18,0.35);
+  }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 20px; border-radius: 10px;
+    font-weight: 600; font-size: 14px; text-decoration: none;
+    transition: transform .15s, box-shadow .2s;
+    cursor: pointer; border: none;
+  }
+  .btn-primary {
+    background: var(--accent); color: #05120a;
+    box-shadow: 0 0 0 1px rgba(163,255,18,0.5), 0 8px 32px rgba(163,255,18,0.25);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--accent), 0 12px 40px rgba(163,255,18,0.45); }
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .mobile-toggle { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+
+  /* HERO */
+  .hero { padding: 100px 0 80px; position: relative; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(163,255,18,0.08);
+    border: 1px solid rgba(163,255,18,0.25);
+    color: var(--accent); font-size: 13px; font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 28px;
+  }
+  .pulse {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 0 var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(163,255,18,0.6); }
+    70% { box-shadow: 0 0 0 10px rgba(163,255,18,0); }
+    100% { box-shadow: 0 0 0 0 rgba(163,255,18,0); }
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 24px;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), #00d4ff, var(--accent-2));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p.lead {
+    font-size: 19px; color: var(--muted);
+    max-width: 640px; margin-bottom: 36px;
+  }
+  .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 24px; margin-top: 72px; max-width: 760px;
+  }
+  .stat { padding: 20px 0; border-top: 1px solid var(--border); }
+  .stat-val {
+    font-size: 32px; font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+  }
+  .stat-label { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* SECTIONS */
+  section { padding: 90px 0; position: relative; }
+  .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
+  .section-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 16px; line-height: 1.15;
+  }
+  .section-head p { color: var(--muted); font-size: 17px; }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .step {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    position: relative;
+    transition: border-color .2s, transform .2s;
+  }
+  .step:hover { border-color: rgba(163,255,18,0.4); transform: translateY(-4px); }
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .step-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    background: rgba(163,255,18,0.1); border: 1px solid rgba(163,255,18,0.25);
+    display: grid; place-items: center; margin-bottom: 18px;
+    font-size: 22px;
+  }
+  .step h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .step p { color: var(--muted); font-size: 14px; }
+
+  /* PROTECTION GRID */
+  .grid-4 {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: var(--accent-2); }
+  .card-emoji { font-size: 28px; margin-bottom: 16px; }
+  .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 14px; }
+
+  /* PRICING */
+  .pricing-wrap { display: flex; justify-content: center; }
+  .price-card {
+    max-width: 520px; width: 100%;
+    background: linear-gradient(180deg, rgba(163,255,18,0.04), rgba(124,92,255,0.04));
+    border: 1px solid rgba(163,255,18,0.3);
+    border-radius: 20px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .price-card::before {
+    content: ''; position: absolute; inset: -1px;
+    border-radius: 20px; padding: 1px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0.5; pointer-events: none;
+  }
+  .price-tag {
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
+    background: var(--accent); color: #000;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .price-amount {
+    display: flex; align-items: baseline; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .price-amount .dollar { font-size: 28px; color: var(--muted); font-weight: 600; }
+  .price-amount .val { font-size: 64px; font-weight: 800; letter-spacing: -0.03em; }
+  .price-amount .per { color: var(--muted); font-size: 16px; }
+  .price-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  .feature-list { list-style: none; margin-bottom: 28px; }
+  .feature-list li {
+    display: flex; gap: 12px; padding: 10px 0;
+    font-size: 15px; align-items: flex-start;
+  }
+  .feature-list .check {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(163,255,18,0.15); color: var(--accent);
+    display: grid; place-items: center; font-size: 12px; font-weight: 800;
+    margin-top: 2px;
+  }
+  .feature-list li.muted { color: var(--muted); }
+
+  .pay-note {
+    display: flex; gap: 12px; align-items: center;
+    padding: 14px 16px; border-radius: 10px;
+    background: rgba(124,92,255,0.08);
+    border: 1px solid rgba(124,92,255,0.25);
+    font-size: 13px; margin-top: 20px;
+  }
+  .pay-note strong { color: var(--accent-2); }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: 70px 40px;
+    background: linear-gradient(135deg, rgba(163,255,18,0.06), rgba(124,92,255,0.06));
+    border: 1px solid var(--border);
+    border-radius: 24px;
+  }
+  .cta h2 { margin-bottom: 14px; }
+  .cta p { color: var(--muted); margin-bottom: 28px; font-size: 17px; }
+  .email-box {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 10px 10px 10px 18px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 999px; font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; margin-bottom: 18px;
+    flex-wrap: wrap; justify-content: center;
+  }
+  .email-box a { color: var(--accent); text-decoration: none; }
+  .copy-btn {
+    background: var(--accent); color: #000; border: none;
+    padding: 8px 14px; border-radius: 999px; font-weight: 600;
+    cursor: pointer; font-size: 13px; transition: opacity .15s;
+  }
+  .copy-btn:hover { opacity: 0.85; }
+
+  /* FAQ */
+  .faq-list { max-width: 760px; margin: 0 auto; }
+  .faq-item {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .faq-q {
+    padding: 20px 24px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 600; font-size: 16px;
+    user-select: none;
+  }
+  .faq-q::after { content: '+'; color: var(--accent); font-size: 22px; transition: transform .2s; }
+  .faq-item.open .faq-q::after { transform: rotate(45deg); }
+  .faq-a {
+    max-height: 0; overflow: hidden;
+    transition: max-height .3s ease, padding .3s ease;
+    color: var(--muted); font-size: 15px;
+    padding: 0 24px;
+  }
+  .faq-item.open .faq-a { max-height: 200px; padding: 0 24px 20px; }
+
+  /* FOOTER */
+  footer {
+    padding: 60px 0 40px;
+    border-top: 1px solid var(--border);
+    margin-top: 60px;
+    color: var(--muted); font-size: 14px;
+  }
+  .foot-grid {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 20px;
+  }
+  .foot-grid a { color: var(--muted); text-decoration: none; transition: color .15s; }
+  .foot-grid a:hover { color: var(--accent); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .nav-links.open {
+      display: flex; flex-direction: column;
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--bg-2); padding: 20px;
+      border-bottom: 1px solid var(--border); gap: 16px;
+    }
+    .mobile-toggle { display: block; }
+    .stats { grid-template-columns: 1fr; gap: 10px; margin-top: 50px; }
+    .hero { padding: 70px 0 50px; }
+    section { padding: 60px 0; }
+    .price-card { padding: 28px; }
+    .price-amount .val { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-decor">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+</div>
+<div class="bg-grid"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <div class="logo-mark">S</div>
+      Securecamp
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#how">How it works</a>
+      <a href="#protect">Protection</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact" class="btn btn-primary">Get Protected →</a>
+    </div>
+    <button class="mobile-toggle" id="mobileToggle">☰</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="container">
+    <div class="badge">
+      <span class="pulse"></span>
+      MONITORING ACTIVE · 24/7
+    </div>
+    <h1>
+      Never lose your<br>
+      Google Ads account<br>
+      <span class="grad">to a surprise ban.</span>
+    </h1>
+    <p class="lead">
+      Securecamp is an AI protection layer for Google Ads advertisers. We scan your campaigns,
+      assets, landing pages, and account health — then alert you to risks <em>before</em>
+      Google suspends you.
+    </p>
+    <div class="hero-cta">
+      <a href="#pricing" class="btn btn-primary">Start for $50/mo</a>
+      <a href="#how" class="btn btn-ghost">See how it works</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val">$2.4M+</div>
+        <div class="stat-label">Ad spend protected</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">98.7%</div>
+        <div class="stat-label">Suspension prevention rate</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">&lt; 60s</div>
+        <div class="stat-label">Risk alert latency</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-tag">// Protocol</div>
+      <h2>Four-stage defense, running continuously</h2>
+      <p>We don't just react. We anticipate. Every Google Ads account under Securecamp is scanned across four layers in real time.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 / DETECT</div>
+        <div class="step-icon">🎯</div>
+        <h3>Requirement scan</h3>
+        <p>We analyze your campaign objective, vertical, and geography to map the exact Google policies that apply to you.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02 / ANALYZE</div>
+        <div class="step-icon">🔍</div>
+        <h3>Asset & page audit</h3>
+        <p>Every ad creative, keyword, landing page, and domain is scored against current Google Ads enforcement patterns.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03 / MONITOR</div>
+        <div class="step-icon">📡</div>
+        <h3>Continuous watch</h3>
+        <p>Your account health is tracked 24/7 — policy updates, disapproval trends, and account-level signals all included.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04 / ALERT</div>
+        <div class="step-icon">🚨</div>
+        <h3>Proactive insights</h3>
+        <p>Receive plain-language risk reports with actionable fixes — days or weeks before a suspension would trigger.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT WE PROTECT -->
+<section id="protect">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-tag">// Coverage</div>
+      <h2>Every attack surface. One shield.</h2>
+      <p>Suspensions rarely come from one thing. They come from combinations. We cover all of them.</p>
+    </div>
+
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-emoji">📊</div>
+        <h3>Campaign Structure</h3>
+        <p>Ad groups, keyword intent, match types, and bidding patterns checked for policy drift.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🎨</div>
+        <h3>Ad Assets</h3>
+        <p>Headlines, descriptions, images, videos, and callouts scanned against prohibited content models.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🌐</div>
+        <h3>Landing Pages</h3>
+        <p>Destination experience, claims, disclosures, and load behavior validated for compliance.</p>
+      </div>
+      <div class="card">
+        <div class="card-emoji">🔐</div>
+        <h3>Account Health</h3>
+        <p>Billing profile, linked services, historic violations, and cross-account footprint assessed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-tag">// Pricing</div>
+      <h2>One plan. One price. Full protection.</h2>
+      <p>No tiers. No upsells. Just a flat monthly rate per Google Ads account.</p>
+    </div>
+
+    <div class="pricing-wrap">
+      <div class="price-card">
+        <span class="price-tag">Advertiser Plan</span>
+        <div class="price-amount">
+          <span class="dollar">$</span>
+          <span class="val">50</span>
+          <span class="per">/ month</span>
+        </div>
+        <div class="price-sub">Per Google Ads account · Cancel anytime</div>
+
+        <ul class="feature-list">
+          <li><span class="check">✓</span> Full campaign requirement detection</li>
+          <li><span class="check">✓</span> Asset & creative compliance scanning</li>
+          <li><span class="check">✓</span> Landing page & domain audit</li>
+          <li><span class="check">✓</span> Account health continuous monitoring</li>
+          <li><span class="check">✓</span> Proactive risk insight reports</li>
+          <li><span class="check">✓</span> Priority email support</li>
+          <li class="muted"><span class="check">∞</span> Unlimited scans per month</li>
+        </ul>
+
+        <a href="#contact" class="btn btn-primary" style="width:100%; justify-content:center;">Connect to activate →</a>
+
+        <div class="pay-note">
+          <strong>₮ USDT only</strong>
+          <span>· Payment accepted via Tether (USDT). Contact us to receive your wallet invoice.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-tag">// FAQ</div>
+      <h2>Common questions</h2>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">How do I get started?</div>
+        <div class="faq-a"><p>Email us at <strong>securecamp@atomicmail.io</strong>. We'll send you a USDT invoice, and once confirmed, your account onboarding begins within 24 hours.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Why only USDT?</div>
+        <div class="faq-a"><p>We operate globally and settle in stablecoin to keep pricing flat at $50 regardless of your local currency. USDT also enables instant settlement without chargeback risk.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Do I need to give you my Google Ads password?</div>
+        <div class="faq-a"><p>No. Securecamp uses read-only access via Google's official OAuth flow. We never request or store your credentials.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">What if my account is already suspended?</div>
+        <div class="faq-a"><p>Securecamp is a prevention tool, not an appeal service. We're best onboarded while your account is in good standing — that's when the insights have the highest value.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I protect multiple accounts?</div>
+        <div class="faq-a"><p>Yes. Each Google Ads account is $50/month. Agencies managing 10+ accounts — email us for volume pricing.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="contact">
+  <div class="container">
+    <div class="cta">
+      <h2>Ready to lock your account down?</h2>
+      <p>Reach out over email. We'll get you onboarded the same day.</p>
+      <div class="email-box">
+        <span>📧</span>
+        <a href="mailto:securecamp@atomicmail.io" id="emailText">securecamp@atomicmail.io</a>
+        <button class="copy-btn" id="copyBtn">Copy</button>
+      </div>
+      <div>
+        <a href="mailto:securecamp@atomicmail.io?subject=Securecamp%20onboarding%20request" class="btn btn-primary">Send onboarding email →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <div class="logo" style="margin-bottom: 8px;">
+          <div class="logo-mark">S</div>
+          Securecamp
+        </div>
+        <div>Google Ads ban protection protocol.</div>
+      </div>
+      <div>
+        <a href="mailto:securecamp@atomicmail.io">securecamp@atomicmail.io</a>
+      </div>
+      <div>
+        © <span id="year"></span> Securecamp · All rights reserved
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Mobile nav toggle
+  const toggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
+  toggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+
+  // Copy email
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText('securecamp@atomicmail.io');
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy', 1600);
+    } catch {
+      copyBtn.textContent = 'Try manually';
+    }
+  });
+
+  // Auto year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Subtle parallax on blobs
+  window.addEventListener('mousemove', (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 20;
+    const y = (e.clientY / window.innerHeight - 0.5) * 20;
+    document.querySelectorAll('.blob').forEach((b, i) => {
+      const depth = (i + 1) * 0.5;
+      b.style.transform = `translate(${x * depth}px, ${y * depth}px)`;
+    });
+  });
+</script>
+
+</body>
+</html>
